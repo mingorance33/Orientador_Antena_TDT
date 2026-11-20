@@ -1,0 +1,1433 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Orientador Antena TDT</title>
+  <style>
+    :root {
+      --bg-primary: #090d16;
+      --bg-card: #131b2e;
+      --bg-card-alt: #1a243d;
+      --border-color: #283554;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent-blue: #38bdf8;
+      --accent-amber: #f59e0b;
+      --accent-green: #10b981;
+      --accent-red: #ef4444;
+      --ring-glow: rgba(56, 189, 248, 0.25);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg-primary);
+      color: var(--text-main);
+      line-height: 1.45;
+      min-height: 100vh;
+      padding-bottom: 2.5rem;
+      overflow-x: hidden;
+    }
+
+    /* Contenedor principal fluido y centrado */
+    .app-container {
+      width: 100%;
+      max-width: 520px;
+      margin: 0 auto;
+      padding: 0.9rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.9rem;
+    }
+
+    /* Cabecera y estado GPS */
+    header {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 0.95rem 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.7rem;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+    }
+
+    .header-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .brand-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #0284c7, #38bdf8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    h1 {
+      font-size: 1.15rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: #ffffff;
+    }
+
+    .subtitle {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    /* Botón de activación sensores (vital para iOS Safari) */
+    .btn-sensors {
+      width: 100%;
+      padding: 0.85rem 1rem;
+      border-radius: 12px;
+      border: none;
+      background: linear-gradient(135deg, #0284c7, #2563eb);
+      color: #ffffff;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      box-shadow: 0 4px 14px rgba(2, 132, 199, 0.45);
+      transition: transform 0.15s ease, background 0.2s ease;
+    }
+
+    .btn-sensors:active {
+      transform: scale(0.98);
+    }
+
+    .btn-sensors.active {
+      background: linear-gradient(135deg, #059669, #10b981);
+      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+    }
+
+    .gps-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.4rem;
+      background: var(--bg-primary);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 0.55rem 0.75rem;
+      font-size: 0.76rem;
+    }
+
+    .gps-status {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-weight: 600;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent-amber);
+      display: inline-block;
+    }
+
+    .dot.live {
+      background: var(--accent-green);
+      box-shadow: 0 0 8px var(--accent-green);
+    }
+
+    .gps-coords {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      color: var(--accent-blue);
+      font-size: 0.75rem;
+    }
+
+    /* Tarjetas genéricas */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 1rem;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .card-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      margin-bottom: 0.55rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* Selector de repetidor */
+    select, input[type="number"] {
+      width: 100%;
+      background: var(--bg-primary);
+      color: var(--text-main);
+      border: 1.5px solid var(--border-color);
+      border-radius: 12px;
+      padding: 0.75rem 0.85rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+      outline: none;
+      appearance: none;
+    }
+
+    select:focus, input[type="number"]:focus {
+      border-color: var(--accent-blue);
+    }
+
+    .select-wrapper {
+      position: relative;
+    }
+
+    .select-wrapper::after {
+      content: "▼";
+      font-size: 0.7rem;
+      color: var(--accent-blue);
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      pointer-events: none;
+    }
+
+    /* Panel de entrada manual */
+    .manual-panel {
+      display: none;
+      margin-top: 0.75rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--border-color);
+      flex-direction: column;
+      gap: 0.65rem;
+    }
+
+    .manual-panel.visible {
+      display: flex;
+    }
+
+    .manual-tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+    }
+
+    .tab-btn {
+      padding: 0.55rem;
+      border-radius: 10px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-primary);
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .tab-btn.active {
+      background: var(--bg-card-alt);
+      color: var(--accent-blue);
+      border-color: var(--accent-blue);
+    }
+
+    .manual-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.55rem;
+    }
+
+    .input-group label {
+      display: block;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      margin-bottom: 0.25rem;
+      font-weight: 600;
+    }
+
+    /* Banner de instrucción de giro en tiempo real */
+    .turn-banner {
+      text-align: center;
+      padding: 0.8rem 0.75rem;
+      border-radius: 14px;
+      background: var(--bg-card-alt);
+      border: 1.5px solid var(--border-color);
+      font-size: 1.15rem;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      transition: all 0.2s ease;
+    }
+
+    .turn-banner.aligned {
+      background: rgba(16, 185, 129, 0.18);
+      border-color: var(--accent-green);
+      color: #34d399;
+      box-shadow: 0 0 20px rgba(16, 185, 129, 0.25);
+    }
+
+    .turn-banner.close {
+      background: rgba(245, 158, 11, 0.15);
+      border-color: var(--accent-amber);
+      color: #fbbf24;
+    }
+
+    /* Contenedor de la Brújula SVG */
+    .compass-wrapper {
+      position: relative;
+      width: 100%;
+      max-width: 320px;
+      aspect-ratio: 1 / 1;
+      margin: 0.75rem auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .compass-svg {
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+      filter: drop-shadow(0 10px 25px rgba(0, 0, 0, 0.5));
+    }
+
+    /* Lecturas numéricas grandes */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.55rem;
+      margin-top: 0.4rem;
+    }
+
+    .metric-box {
+      background: var(--bg-primary);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 0.65rem 0.4rem;
+      text-align: center;
+    }
+
+    .metric-title {
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 0.2rem;
+    }
+
+    .metric-value {
+      font-size: 1.35rem;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+      color: #ffffff;
+    }
+
+    .metric-value.target-color {
+      color: var(--accent-amber);
+    }
+
+    .metric-value.dist-color {
+      color: var(--accent-blue);
+    }
+
+    /* Controles de Audio, Simulador y Calibración */
+    .controls-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.6rem;
+      margin-top: 0.85rem;
+    }
+
+    .btn-toggle {
+      padding: 0.75rem 0.6rem;
+      border-radius: 12px;
+      border: 1.5px solid var(--border-color);
+      background: var(--bg-primary);
+      color: var(--text-main);
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      transition: all 0.15s ease;
+    }
+
+    .btn-toggle.active {
+      background: rgba(56, 189, 248, 0.16);
+      border-color: var(--accent-blue);
+      color: var(--accent-blue);
+    }
+
+    /* Slider de calibración */
+    .calibration-box {
+      margin-top: 0.85rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .cal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.78rem;
+      margin-bottom: 0.45rem;
+    }
+
+    .btn-mini {
+      background: var(--bg-card-alt);
+      border: 1px solid var(--border-color);
+      color: var(--accent-blue);
+      padding: 0.3rem 0.6rem;
+      border-radius: 8px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent-blue);
+      height: 6px;
+      background: var(--bg-primary);
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    /* Nivel de burbuja (Spirit Level) */
+    .level-container {
+      display: flex;
+      align-items: center;
+      gap: 0.9rem;
+    }
+
+    .bubble-arena {
+      width: 78px;
+      height: 78px;
+      border-radius: 50%;
+      background: radial-gradient(circle, #1e293b 0%, #090d16 100%);
+      border: 2px solid var(--border-color);
+      position: relative;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .bubble-arena::before,
+    .bubble-arena::after {
+      content: "";
+      position: absolute;
+      background: rgba(148, 163, 184, 0.25);
+    }
+
+    .bubble-arena::before {
+      width: 100%;
+      height: 1px;
+    }
+
+    .bubble-arena::after {
+      width: 1px;
+      height: 100%;
+    }
+
+    .bubble-ring {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      border: 1.5px dashed rgba(255, 255, 255, 0.45);
+      position: absolute;
+    }
+
+    .bubble-dot {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--accent-amber);
+      box-shadow: 0 0 10px var(--accent-amber);
+      position: absolute;
+      transition: transform 0.08s linear, background 0.2s ease;
+    }
+
+    .bubble-dot.level-ok {
+      background: var(--accent-green);
+      box-shadow: 0 0 12px var(--accent-green);
+    }
+
+    .level-info {
+      flex: 1;
+      font-size: 0.82rem;
+    }
+
+    .level-angles {
+      display: flex;
+      gap: 0.75rem;
+      margin-top: 0.35rem;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 0.8rem;
+      color: var(--accent-blue);
+    }
+
+    /* Consejos y seguridad */
+    .tips-card {
+      background: rgba(245, 158, 11, 0.08);
+      border: 1px solid rgba(245, 158, 11, 0.35);
+      border-radius: 16px;
+      padding: 0.95rem 1rem;
+      font-size: 0.82rem;
+      color: #e2e8f0;
+    }
+
+    .tips-title {
+      color: #fbbf24;
+      font-weight: 800;
+      font-size: 0.88rem;
+      margin-bottom: 0.45rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .tips-list {
+      padding-left: 1.15rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    /* Caja de notificación no intrusiva (reemplaza alert) */
+    .toast {
+      position: fixed;
+      bottom: 18px;
+      left: 50%;
+      transform: translateX(-50%) translateY(120%);
+      background: #1e293b;
+      color: #ffffff;
+      border: 1px solid var(--accent-blue);
+      padding: 0.75rem 1.1rem;
+      border-radius: 12px;
+      font-size: 0.84rem;
+      font-weight: 600;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
+      z-index: 999;
+      max-width: 90vw;
+      text-align: center;
+      transition: transform 0.25s ease;
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- CABECERA Y PERMISOS -->
+    <header>
+      <div class="header-top">
+        <div class="brand">
+          <div class="brand-icon" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"/>
+              <path d="M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5"/>
+              <circle cx="12" cy="12" r="2"/>
+              <path d="M16.2 7.8c2.3 2.3 2.3 6.1 0 8.5"/>
+              <path d="M19.1 4.9C23 8.8 23 15.1 19.1 19"/>
+              <line x1="12" y1="14" x2="12" y2="22"/>
+            </svg>
+          </div>
+          <div>
+            <h1>Orientador Antena TDT</h1>
+            <div class="subtitle">Brújula de precisión y nivel para TDT España</div>
+          </div>
+        </div>
+      </div>
+
+      <button id="btnActivateSensors" class="btn-sensors" type="button">
+        <span>🧭 Activar Brújula y GPS</span>
+      </button>
+
+      <div class="gps-bar">
+        <div class="gps-status">
+          <span id="gpsDot" class="dot"></span>
+          <span id="gpsStatusText">Ubicación base: Utrera (Sevilla)</span>
+        </div>
+        <div id="gpsCoordsText" class="gps-coords">37.1819°, -5.7811°</div>
+      </div>
+    </header>
+
+    <!-- SELECTOR DE REPETIDOR -->
+    <section class="card">
+      <div class="card-label">
+        <span>📡 Repetidor TDT Objetivo</span>
+        <span id="nearestBadge" style="color: var(--accent-green); font-size: 0.7rem;">Ordenado por cercanía</span>
+      </div>
+
+      <div class="select-wrapper">
+        <select id="repeaterSelect" aria-label="Seleccionar repetidor TDT"></select>
+      </div>
+
+      <!-- Panel desplegable para Entrada Manual -->
+      <div id="manualPanel" class="manual-panel">
+        <div class="manual-tabs">
+          <button type="button" id="tabAzimuth" class="tab-btn active">Por Grados (Azimut)</button>
+          <button type="button" id="tabCoords" class="tab-btn">Por Coordenadas</button>
+        </div>
+
+        <div id="manualAzimuthBox" class="input-group">
+          <label for="manualAzimuthInput">Rumbo exacto hacia el repetidor (0° a 359°):</label>
+          <input type="number" id="manualAzimuthInput" min="0" max="359" value="325" placeholder="Ej: 325" />
+        </div>
+
+        <div id="manualCoordsBox" class="manual-grid" style="display: none;">
+          <div class="input-group">
+            <label for="manualLatInput">Latitud Repetidor:</label>
+            <input type="number" id="manualLatInput" step="0.0001" value="37.4167" placeholder="37.4167" />
+          </div>
+          <div class="input-group">
+            <label for="manualLonInput">Longitud Repetidor:</label>
+            <input type="number" id="manualLonInput" step="0.0001" value="-6.0772" placeholder="-6.0772" />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- BRÚJULA PRINCIPAL Y LECTURAS -->
+    <section class="card">
+      <div id="turnBanner" class="turn-banner">
+        Pulsa "Activar Brújula" o usa el modo prueba
+      </div>
+
+      <div class="compass-wrapper">
+        <svg id="compassSvg" class="compass-svg" viewBox="0 0 320 320">
+          <defs>
+            <radialGradient id="dialGrad" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#17223b" />
+              <stop offset="82%" stop-color="#0d1424" />
+              <stop offset="100%" stop-color="#070b14" />
+            </radialGradient>
+            <linearGradient id="beamGrad" x1="0%" y1="100%" x2="0%" y2="0%">
+              <stop offset="0%" stop-color="rgba(245, 158, 11, 0)" />
+              <stop offset="100%" stop-color="rgba(245, 158, 11, 0.35)" />
+            </linearGradient>
+            <linearGradient id="beamGradAligned" x1="0%" y1="100%" x2="0%" y2="0%">
+              <stop offset="0%" stop-color="rgba(16, 185, 129, 0)" />
+              <stop offset="100%" stop-color="rgba(16, 185, 129, 0.45)" />
+            </linearGradient>
+          </defs>
+
+          <!-- Aro exterior fijo -->
+          <circle id="outerRing" cx="160" cy="160" r="150" fill="url(#dialGrad)" stroke="#283554" stroke-width="5" />
+          <circle cx="160" cy="160" r="112" fill="none" stroke="rgba(148, 163, 184, 0.15)" stroke-width="1" stroke-dasharray="4 4" />
+          <circle cx="160" cy="160" r="65" fill="none" stroke="rgba(148, 163, 184, 0.12)" stroke-width="1" />
+
+          <!-- Rosa de los vientos giratoria (se mueve según el rumbo del móvil) -->
+          <g id="compassRose" transform="rotate(0 160 160)">
+            <!-- Marcas de grados generadas por JS -->
+            <g id="dialTicks"></g>
+
+            <!-- Puntos cardinales -->
+            <text x="160" y="42" text-anchor="middle" fill="#ef4444" font-size="18" font-weight="900">N</text>
+            <text x="278" y="166" text-anchor="middle" fill="#f8fafc" font-size="16" font-weight="800">E</text>
+            <text x="160" y="288" text-anchor="middle" fill="#f8fafc" font-size="16" font-weight="800">S</text>
+            <text x="42" y="166" text-anchor="middle" fill="#f8fafc" font-size="16" font-weight="800">O</text>
+
+            <!-- Puntero del Repetidor Objetivo (gira junto con la rosa al azimut exacto) -->
+            <g id="targetMarker" transform="rotate(325 160 160)">
+              <!-- Haz de señal -->
+              <polygon id="targetBeam" points="160,160 132,18 188,18" fill="url(#beamGrad)" />
+              <!-- Línea central al objetivo -->
+              <line id="targetLine" x1="160" y1="160" x2="160" y2="20" stroke="#f59e0b" stroke-width="3" stroke-dasharray="6 4" />
+              <!-- Icono / Triángulo objetivo en el borde -->
+              <polygon id="targetArrow" points="160,6 149,26 171,26" fill="#f59e0b" stroke="#090d16" stroke-width="1.5" />
+              <circle cx="160" cy="36" r="11" fill="#f59e0b" />
+              <text x="160" y="40" text-anchor="middle" fill="#090d16" font-size="10" font-weight="900">TDT</text>
+            </g>
+          </g>
+
+          <!-- Línea fija superior: hacia donde apunta la parte superior del teléfono (la antena) -->
+          <line x1="160" y1="160" x2="160" y2="12" stroke="#38bdf8" stroke-width="3.5" stroke-linecap="round" />
+          <polygon points="160,2 152,17 168,17" fill="#38bdf8" />
+
+          <!-- Silueta central de antena Yagi apuntando hacia arriba (dirección del móvil) -->
+          <g stroke="#38bdf8" stroke-width="2.5" stroke-linecap="round" opacity="0.9">
+            <line x1="160" y1="132" x2="160" y2="192" />
+            <line x1="146" y1="142" x2="174" y2="142" />
+            <line x1="142" y1="154" x2="178" y2="154" />
+            <line x1="138" y1="166" x2="182" y2="166" />
+            <line x1="134" y1="180" x2="186" y2="180" />
+          </g>
+          <circle cx="160" cy="160" r="6" fill="#090d16" stroke="#38bdf8" stroke-width="2.5" />
+        </svg>
+      </div>
+
+      <!-- Lecturas Numéricas -->
+      <div class="metrics-grid">
+        <div class="metric-box">
+          <div class="metric-title">Rumbo Móvil</div>
+          <div id="currentHeadingVal" class="metric-value">---°</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-title">Objetivo TDT</div>
+          <div id="targetAzimuthVal" class="metric-value target-color">325°</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-title">Distancia</div>
+          <div id="distanceVal" class="metric-value dist-color">37.1 km</div>
+        </div>
+      </div>
+
+      <!-- Botones de Audio y Simulación Manual (útil en escritorio o sin sensor) -->
+      <div class="controls-row">
+        <button type="button" id="btnAudio" class="btn-toggle">
+          <span>🔇 Aviso Sonoro: OFF</span>
+        </button>
+        <button type="button" id="btnSim" class="btn-toggle">
+          <span>🎛️ Simular Giro: OFF</span>
+        </button>
+      </div>
+
+      <!-- Deslizador de simulación (visible solo cuando se activa Simular Giro) -->
+      <div id="simBox" class="calibration-box" style="display: none;">
+        <div class="cal-header">
+          <span style="color: var(--accent-blue); font-weight: 700;">Simulación de orientación del móvil:</span>
+          <span id="simDegLabel" style="font-weight: 800;">0°</span>
+        </div>
+        <input type="range" id="simSlider" min="0" max="359" value="0" />
+      </div>
+
+      <!-- Calibración / Compensación Magnética -->
+      <div class="calibration-box">
+        <div class="cal-header">
+          <span style="color: var(--text-muted); font-weight: 600;">Ajuste / Desvío Brújula: <strong id="offsetVal" style="color: #fff;">0°</strong></span>
+          <button type="button" id="btnResetOffset" class="btn-mini">Reset Norte (0°)</button>
+        </div>
+        <input type="range" id="offsetSlider" min="-45" max="45" value="0" />
+      </div>
+    </section>
+
+    <!-- NIVEL DE BURBUJA INTEGRADO -->
+    <section class="card">
+      <div class="card-label">
+        <span>📐 Nivel Horizontal de la Antena</span>
+        <span id="levelStatusBadge" style="color: var(--text-muted); font-size: 0.7rem;">Esperando sensor</span>
+      </div>
+      <div class="level-container">
+        <div class="bubble-arena" aria-label="Nivel de burbuja">
+          <div class="bubble-ring"></div>
+          <div id="bubbleDot" class="bubble-dot"></div>
+        </div>
+        <div class="level-info">
+          <div id="levelAdvice" style="font-weight: 700; color: #f8fafc;">
+            Apoya el móvil plano sobre el brazo de la antena para comprobar que está horizontal.
+          </div>
+          <div class="level-angles">
+            <span>Inclinación: <strong id="pitchVal">0.0°</strong></span>
+            <span>Alabeo: <strong id="rollVal">0.0°</strong></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- INSTRUCCIONES Y SEGURIDAD EN EXTERIORES -->
+    <aside class="tips-card">
+      <div class="tips-title">⚠️ Consejos clave antes de apretar la antena</div>
+      <ul class="tips-list">
+        <li><strong>Aléjate 50 cm del mástil metálico:</strong> El hierro desvía la brújula del móvil. Sitúate detrás de la antena mirando en paralelo a su eje central.</li>
+        <li><strong>Móvil en horizontal:</strong> Sujeta el teléfono plano (pantalla hacia el cielo) con su borde superior apuntando en la misma dirección que la punta de la antena.</li>
+        <li><strong>Ajuste fino de 10 segundos:</strong> La TDT tarda unos segundos en estabilizar la barra de <em>Calidad</em> en el televisor. Gira de 5° en 5° y espera antes de fijar las tuercas.</li>
+      </ul>
+    </aside>
+  </div>
+
+  <!-- Notificación Toast -->
+  <div id="toast" class="toast" role="status"></div>
+
+  <script>
+    /**
+     * Base de datos de repetidores principales de TDT en Sevilla y Andalucía
+     * Coordenadas verificadas para cálculo geodésico exacto.
+     */
+    const REPEATERS_DB = [
+      {
+        id: "valencina",
+        name: "Valencina de la Concepción (Sevilla Principal)",
+        lat: 37.4167,
+        lon: -6.0772
+      },
+      {
+        id: "moron",
+        name: "Morón de la Frontera / Sierra de Esparteros",
+        lat: 37.1189,
+        lon: -5.4536
+      },
+      {
+        id: "jerez",
+        name: "Jerez de la Frontera / San Cristóbal",
+        lat: 36.6347,
+        lon: -6.1614
+      },
+      {
+        id: "osuna",
+        name: "Osuna / El Coto",
+        lat: 37.2356,
+        lon: -5.1031
+      },
+      {
+        id: "estepa",
+        name: "Estepa / Becerrero",
+        lat: 37.2833,
+        lon: -4.8789
+      },
+      {
+        id: "guadalcanal",
+        name: "Guadalcanal / Sierra del Agua (Sevilla Norte)",
+        lat: 38.0933,
+        lon: -5.8189
+      },
+      {
+        id: "cordoba",
+        name: "Lagar de la Cruz (Córdoba)",
+        lat: 37.9436,
+        lon: -4.8122
+      },
+      {
+        id: "mijas",
+        name: "Sierra de Mijas (Málaga)",
+        lat: 36.6056,
+        lon: -4.6431
+      }
+    ];
+
+    // Estado global de la aplicación
+    const state = {
+      // Ubicación por defecto: Utrera, Sevilla (se actualiza al activar GPS)
+      userLat: 37.1819,
+      userLon: -5.7811,
+      gpsAccuracy: null,
+      hasLiveGps: false,
+
+      selectedRepeaterId: "valencina",
+      manualModeType: "azimuth", // 'azimuth' | 'coords'
+      manualAzimuth: 325,
+      manualLat: 37.4167,
+      manualLon: -6.0772,
+
+      targetAzimuth: 325,
+      targetDistanceKm: 37.1,
+
+      rawHeading: null,      // Rumbo bruto del sensor (0-359)
+      smoothedHeading: null, // Rumbo suavizado para evitar vibración
+      calibrationOffset: 0,  // Compensación manual (-45 a +45)
+
+      sensorsActive: false,
+      simMode: false,
+      simHeading: 0,
+
+      audioEnabled: false,
+      audioCtx: null,
+      lastBeepTime: 0,
+      steadyOscillator: null,
+      steadyGain: null
+    };
+
+    // Referencias DOM
+    const el = {
+      btnActivateSensors: document.getElementById("btnActivateSensors"),
+      gpsDot: document.getElementById("gpsDot"),
+      gpsStatusText: document.getElementById("gpsStatusText"),
+      gpsCoordsText: document.getElementById("gpsCoordsText"),
+      repeaterSelect: document.getElementById("repeaterSelect"),
+      manualPanel: document.getElementById("manualPanel"),
+      tabAzimuth: document.getElementById("tabAzimuth"),
+      tabCoords: document.getElementById("tabCoords"),
+      manualAzimuthBox: document.getElementById("manualAzimuthBox"),
+      manualCoordsBox: document.getElementById("manualCoordsBox"),
+      manualAzimuthInput: document.getElementById("manualAzimuthInput"),
+      manualLatInput: document.getElementById("manualLatInput"),
+      manualLonInput: document.getElementById("manualLonInput"),
+      turnBanner: document.getElementById("turnBanner"),
+      outerRing: document.getElementById("outerRing"),
+      compassRose: document.getElementById("compassRose"),
+      dialTicks: document.getElementById("dialTicks"),
+      targetMarker: document.getElementById("targetMarker"),
+      targetBeam: document.getElementById("targetBeam"),
+      targetLine: document.getElementById("targetLine"),
+      targetArrow: document.getElementById("targetArrow"),
+      currentHeadingVal: document.getElementById("currentHeadingVal"),
+      targetAzimuthVal: document.getElementById("targetAzimuthVal"),
+      distanceVal: document.getElementById("distanceVal"),
+      btnAudio: document.getElementById("btnAudio"),
+      btnSim: document.getElementById("btnSim"),
+      simBox: document.getElementById("simBox"),
+      simSlider: document.getElementById("simSlider"),
+      simDegLabel: document.getElementById("simDegLabel"),
+      offsetSlider: document.getElementById("offsetSlider"),
+      offsetVal: document.getElementById("offsetVal"),
+      btnResetOffset: document.getElementById("btnResetOffset"),
+      levelStatusBadge: document.getElementById("levelStatusBadge"),
+      bubbleDot: document.getElementById("bubbleDot"),
+      levelAdvice: document.getElementById("levelAdvice"),
+      pitchVal: document.getElementById("pitchVal"),
+      rollVal: document.getElementById("rollVal"),
+      toast: document.getElementById("toast")
+    };
+
+    /**
+     * Muestra un mensaje temporal en pantalla (sin usar alert)
+     */
+    let toastTimeout = null;
+    function showToast(msg) {
+      el.toast.textContent = msg;
+      el.toast.classList.add("show");
+      clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        el.toast.classList.remove("show");
+      }, 3600);
+    }
+
+    /**
+     * Dibuja las marcas de grados (cada 5° y 30°) en la esfera SVG de la brújula
+     */
+    function buildCompassTicks() {
+      const fragment = document.createDocumentFragment();
+      const svgNS = "http://www.w3.org/2000/svg";
+
+      for (let deg = 0; deg < 360; deg += 5) {
+        const isMajor = deg % 30 === 0;
+        const isMedium = deg % 15 === 0;
+        const rOuter = 144;
+        const rInner = isMajor ? 128 : isMedium ? 134 : 138;
+
+        const rad = ((deg - 90) * Math.PI) / 180;
+        const x1 = 160 + rInner * Math.cos(rad);
+        const y1 = 160 + rInner * Math.sin(rad);
+        const x2 = 160 + rOuter * Math.cos(rad);
+        const y2 = 160 + rOuter * Math.sin(rad);
+
+        const line = document.createElementNS(svgNS, "line");
+        line.setAttribute("x1", x1.toFixed(1));
+        line.setAttribute("y1", y1.toFixed(1));
+        line.setAttribute("x2", x2.toFixed(1));
+        line.setAttribute("y2", y2.toFixed(1));
+        line.setAttribute("stroke", deg === 0 ? "#ef4444" : isMajor ? "#cbd5e1" : "#475569");
+        line.setAttribute("stroke-width", isMajor ? "2.2" : "1.1");
+        fragment.appendChild(line);
+
+        // Etiquetas numéricas cada 30° excepto los puntos cardinales N/E/S/O
+        if (isMajor && deg % 90 !== 0) {
+          const rText = 115;
+          const tx = 160 + rText * Math.cos(rad);
+          const ty = 160 + rText * Math.sin(rad) + 4;
+          const text = document.createElementNS(svgNS, "text");
+          text.setAttribute("x", tx.toFixed(1));
+          text.setAttribute("y", ty.toFixed(1));
+          text.setAttribute("text-anchor", "middle");
+          text.setAttribute("fill", "#94a3b8");
+          text.setAttribute("font-size", "10");
+          text.setAttribute("font-weight", "700");
+          text.textContent = deg;
+          fragment.appendChild(text);
+        }
+      }
+      el.dialTicks.appendChild(fragment);
+    }
+
+    /**
+     * Cálculos geodésicos (Fórmula de Haversine para distancia y rumbo inicial ortodrómico)
+     */
+    function toRad(deg) {
+      return (deg * Math.PI) / 180;
+    }
+
+    function toDeg(rad) {
+      return (rad * 180) / Math.PI;
+    }
+
+    function calculateDistanceKm(lat1, lon1, lat2, lon2) {
+      const R = 6371; // Radio medio de la Tierra en km
+      const dLat = toRad(lat2 - lat1);
+      const dLon = toRad(lon2 - lon1);
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c;
+    }
+
+    function calculateBearing(lat1, lon1, lat2, lon2) {
+      const phi1 = toRad(lat1);
+      const phi2 = toRad(lat2);
+      const dLambda = toRad(lon2 - lon1);
+
+      const y = Math.sin(dLambda) * Math.cos(phi2);
+      const x =
+        Math.cos(phi1) * Math.sin(phi2) -
+        Math.sin(phi1) * Math.cos(phi2) * Math.cos(dLambda);
+
+      const theta = Math.atan2(y, x);
+      return (toDeg(theta) + 360) % 360;
+    }
+
+    /**
+     * Rellena y ordena el desplegable de repetidores por distancia desde la posición del usuario
+     */
+    function populateRepeatersDropdown() {
+      const currentVal = el.repeaterSelect.value || state.selectedRepeaterId;
+
+      const enriched = REPEATERS_DB.map((rep) => {
+        const dist = calculateDistanceKm(state.userLat, state.userLon, rep.lat, rep.lon);
+        const az = calculateBearing(state.userLat, state.userLon, rep.lat, rep.lon);
+        return { ...rep, dist, az };
+      }).sort((a, b) => a.dist - b.dist);
+
+      el.repeaterSelect.innerHTML = "";
+      enriched.forEach((rep) => {
+        const opt = document.createElement("option");
+        opt.value = rep.id;
+        opt.textContent = `${rep.name} (${rep.dist.toFixed(1)} km · ${Math.round(rep.az)}°)`;
+        el.repeaterSelect.appendChild(opt);
+      });
+
+      // Opción final para entrada manual en cualquier punto de España
+      const manualOpt = document.createElement("option");
+      manualOpt.value = "manual";
+      manualOpt.textContent = "✏️ Entrada Manual (Cualquier punto de España)";
+      el.repeaterSelect.appendChild(manualOpt);
+
+      // Mantener selección si existe, o elegir el más cercano
+      if ([...el.repeaterSelect.options].some((o) => o.value === currentVal)) {
+        el.repeaterSelect.value = currentVal;
+      } else {
+        el.repeaterSelect.value = enriched[0].id;
+        state.selectedRepeaterId = enriched[0].id;
+      }
+
+      recalculateTarget();
+    }
+
+    /**
+     * Recalcula el azimut objetivo y distancia según el repetidor o parámetros manuales
+     */
+    function recalculateTarget() {
+      const sel = el.repeaterSelect.value;
+      state.selectedRepeaterId = sel;
+
+      if (sel === "manual") {
+        el.manualPanel.classList.add("visible");
+        if (state.manualModeType === "azimuth") {
+          const az = parseFloat(el.manualAzimuthInput.value);
+          state.targetAzimuth = isNaN(az) ? 0 : ((az % 360) + 360) % 360;
+          state.targetDistanceKm = null;
+        } else {
+          const rLat = parseFloat(el.manualLatInput.value);
+          const rLon = parseFloat(el.manualLonInput.value);
+          if (!isNaN(rLat) && !isNaN(rLon)) {
+            state.targetAzimuth = calculateBearing(state.userLat, state.userLon, rLat, rLon);
+            state.targetDistanceKm = calculateDistanceKm(state.userLat, state.userLon, rLat, rLon);
+          }
+        }
+      } else {
+        el.manualPanel.classList.remove("visible");
+        const rep = REPEATERS_DB.find((r) => r.id === sel) || REPEATERS_DB[0];
+        state.targetAzimuth = calculateBearing(state.userLat, state.userLon, rep.lat, rep.lon);
+        state.targetDistanceKm = calculateDistanceKm(state.userLat, state.userLon, rep.lat, rep.lon);
+      }
+
+      const roundedTarget = Math.round(state.targetAzimuth) % 360;
+      el.targetAzimuthVal.textContent = `${roundedTarget}°`;
+      el.distanceVal.textContent =
+        state.targetDistanceKm !== null ? `${state.targetDistanceKm.toFixed(1)} km` : "Manual";
+
+      // Rotar el marcador del objetivo dentro de la rosa de los vientos
+      el.targetMarker.setAttribute("transform", `rotate(${state.targetAzimuth.toFixed(1)} 160 160)`);
+
+      updateCompassUI();
+    }
+
+    /**
+     * Obtiene el rumbo efectivo actual (combinando sensor o simulación + calibración)
+     */
+    function getEffectiveHeading() {
+      let base = state.simMode ? state.simHeading : state.smoothedHeading;
+      if (base === null || base === undefined) return null;
+      return (base + state.calibrationOffset + 360) % 360;
+    }
+
+    /**
+     * Actualiza la rotación de la brújula, textos de giro y estado de alineación
+     */
+    function updateCompassUI() {
+      const heading = getEffectiveHeading();
+
+      if (heading === null) {
+        el.currentHeadingVal.textContent = "---°";
+        return;
+      }
+
+      const roundedHeading = Math.round(heading) % 360;
+      const roundedTarget = Math.round(state.targetAzimuth) % 360;
+      el.currentHeadingVal.textContent = `${roundedHeading}°`;
+
+      // Rotar la rosa de los vientos en sentido contrario al rumbo del dispositivo
+      el.compassRose.setAttribute("transform", `rotate(${(-heading).toFixed(1)} 160 160)`);
+
+      // Calcular diferencia angular mínima (-180 a +180)
+      let diff = ((roundedTarget - roundedHeading + 540) % 360) - 180;
+      const absDiff = Math.abs(diff);
+
+      if (absDiff <= 3) {
+        // ¡Alineado dentro de ±3°!
+        el.turnBanner.textContent = "✅ ¡ANTENA ALINEADA! Mantén esta posición";
+        el.turnBanner.className = "turn-banner aligned";
+        el.outerRing.setAttribute("stroke", "#10b981");
+        el.targetBeam.setAttribute("fill", "url(#beamGradAligned)");
+        el.targetLine.setAttribute("stroke", "#10b981");
+        el.targetArrow.setAttribute("fill", "#10b981");
+      } else {
+        const directionText = diff > 0 ? "Derecha ↻" : "↺ Izquierda";
+        el.turnBanner.textContent = `Gira ${absDiff}° a la ${directionText}`;
+        el.turnBanner.className = absDiff <= 15 ? "turn-banner close" : "turn-banner";
+        el.outerRing.setAttribute("stroke", absDiff <= 15 ? "#f59e0b" : "#283554");
+        el.targetBeam.setAttribute("fill", "url(#beamGrad)");
+        el.targetLine.setAttribute("stroke", "#f59e0b");
+        el.targetArrow.setAttribute("fill", "#f59e0b");
+      }
+
+      handleAudioFeedback(absDiff);
+    }
+
+    /**
+     * Sistema de feedback acústico con Web Audio API (sin archivos externos)
+     * - Emite pitidos más rápidos al acercarse al objetivo
+     * - Emite un tono continuo suave cuando está alineado (±3°)
+     */
+    function initAudioContext() {
+      if (!state.audioCtx) {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (AudioCtx) {
+          state.audioCtx = new AudioCtx();
+        }
+      }
+      if (state.audioCtx && state.audioCtx.state === "suspended") {
+        state.audioCtx.resume();
+      }
+    }
+
+    function stopSteadyTone() {
+      if (state.steadyOscillator) {
+        try {
+          state.steadyOscillator.stop();
+          state.steadyOscillator.disconnect();
+        } catch (e) {}
+        state.steadyOscillator = null;
+        state.steadyGain = null;
+      }
+    }
+
+    function playShortBeep(freq = 620, duration = 0.06) {
+      if (!state.audioCtx) return;
+      const now = state.audioCtx.currentTime;
+      const osc = state.audioCtx.createOscillator();
+      const gain = state.audioCtx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(freq, now);
+
+      gain.gain.setValueAtTime(0.14, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+      osc.connect(gain);
+      gain.connect(state.audioCtx.destination);
+      osc.start(now);
+      osc.stop(now + duration);
+    }
+
+    function handleAudioFeedback(absDiff) {
+      if (!state.audioEnabled || !state.audioCtx) {
+        stopSteadyTone();
+        return;
+      }
+
+      if (absDiff <= 3) {
+        // Tono continuo de confirmación de alineación
+        if (!state.steadyOscillator) {
+          const now = state.audioCtx.currentTime;
+          const osc = state.audioCtx.createOscillator();
+          const gain = state.audioCtx.createGain();
+          osc.type = "triangle";
+          osc.frequency.setValueAtTime(880, now);
+          gain.gain.setValueAtTime(0.12, now);
+          osc.connect(gain);
+          gain.connect(state.audioCtx.destination);
+          osc.start(now);
+          state.steadyOscillator = osc;
+          state.steadyGain = gain;
+        }
+      } else {
+        stopSteadyTone();
+        // Intervalo dinámico según cercanía: entre 140 ms (muy cerca) y 1100 ms (lejos)
+        const clamped = Math.min(absDiff, 120);
+        const intervalMs = 140 + (clamped / 120) * 950;
+        const nowMs = performance.now();
+
+        if (nowMs - state.lastBeepTime >= intervalMs) {
+          state.lastBeepTime = nowMs;
+          const freq = absDiff <= 15 ? 740 : 520;
+          playShortBeep(freq, 0.055);
+        }
+      }
+    }
+
+    /**
+     * Suavizado circular del rumbo magnético para evitar saltos bruscos entre 359° y 0°
+     */
+    function smoothCompassAngle(newAngle) {
+      if (state.smoothedHeading === null) {
+        state.smoothedHeading = newAngle;
+        return;
+      }
+      const alpha = 0.25; // Factor de suavizado
+      let delta = ((newAngle - state.smoothedHeading + 540) % 360) - 180;
+      state.smoothedHeading = (state.smoothedHeading + alpha * delta + 360) % 360;
+    }
+
+    /**
+     * Manejador de orientación del dispositivo (iOS webkitCompassHeading y Android alpha)
+     */
+    function handleOrientationEvent(event) {
+      let heading = null;
+
+      if (typeof event.webkitCompassHeading === "number") {
+        // iOS Safari proporciona directamente el rumbo magnético respecto al norte
+        heading = event.webkitCompassHeading;
+      } else if (event.alpha !== null) {
+        // Android / estándares W3C
+        if (event.absolute === true || event.type === "deviceorientationabsolute") {
+          heading = (360 - event.alpha) % 360;
+        } else {
+          heading = (360 - event.alpha) % 360;
+        }
+      }
+
+      if (heading !== null && !isNaN(heading)) {
+        state.rawHeading = heading;
+        smoothCompassAngle(heading);
+        if (!state.simMode) {
+          updateCompassUI();
+        }
+      }
+
+      // Actualizar nivel de burbuja con beta (inclinación frontal) y gamma (lateral)
+      if (typeof event.beta === "number" && typeof event.gamma === "number") {
+        updateSpiritLevel(event.beta, event.gamma);
+      }
+    }
+
+    /**
+     * Actualiza el nivel de burbuja horizontal
+     */
+    function updateSpiritLevel(beta, gamma) {
+      el.levelStatusBadge.textContent = "Activo";
+      el.levelStatusBadge.style.color = "var(--accent-green)";
+
+      // Limitar rango visual a ±30°
+      const maxTilt = 30;
+      const clampedBeta = Math.max(-maxTilt, Math.min(maxTilt, beta));
+      const clampedGamma = Math.max(-maxTilt, Math.min(maxTilt, gamma));
+
+      // Desplazamiento máximo de 26px dentro del círculo de 78px
+      const offsetX = (clampedGamma / maxTilt) * 26;
+      const offsetY = (clampedBeta / maxTilt) * 26;
+
+      el.bubbleDot.style.transform = `translate(${offsetX.toFixed(1)}px, ${offsetY.toFixed(1)}px)`;
+      el.pitchVal.textContent = `${beta.toFixed(1)}°`;
+      el.rollVal.textContent = `${gamma.toFixed(1)}°`;
+
+      const totalTilt = Math.hypot(beta, gamma);
+      if (totalTilt <= 2.5) {
+        el.bubbleDot.classList.add("level-ok");
+        el.levelAdvice.textContent = "✅ Nivel perfecto: el brazo de la antena está horizontal.";
+        el.levelAdvice.style.color = "#34d399";
+      } else {
+        el.bubbleDot.classList.remove("level-ok");
+        el.levelAdvice.textContent = "Ajusta la inclinación hasta centrar la burbuja verde.";
+        el.levelAdvice.style.color = "#f8fafc";
+      }
+    }
+
+    /**
+     * Solicita permisos de GPS y Brújula (con soporte explícito para iOS 13+ Safari)
+     */
+    async function activateSensors() {
+      // 1. Solicitar permiso de orientación en iOS Safari
+      try {
+        if (
+          typeof DeviceOrientationEvent !== "undefined" &&
+          typeof DeviceOrientationEvent.requestPermission === "function"
+        ) {
+          const response = await DeviceOrientationEvent.requestPermission();
+          if (response === "granted") {
+            window.addEventListener("deviceorientation", handleOrientationEvent, true);
+            state.sensorsActive = true;
+          } else {
+            showToast("Permiso de brújula denegado. Revisa Ajustes > Safari.");
+          }
+        } else {
+          // Android y navegadores estándar
+          if ("ondeviceorientationabsolute" in window) {
+            window.addEventListener("deviceorientationabsolute", handleOrientationEvent, true);
+          }
+          window.addEventListener("deviceorientation", handleOrientationEvent, true);
+          state.sensorsActive = true;
+        }
+      } catch (err) {
+        console.error("Error al solicitar brújula:", err);
+        showToast("No se pudo iniciar la brújula. Puedes usar 'Simular Giro'.");
+      }
+
+      // 2. Activar geolocalización GPS en alta precisión
+      if ("geolocation" in navigator) {
+        el.gpsStatusText.textContent = "Buscando satélites GPS...";
+        navigator.geolocation.watchPosition(
+          (pos) => {
+            state.userLat = pos.coords.latitude;
+            state.userLon = pos.coords.longitude;
+            state.gpsAccuracy = Math.round(pos.coords.accuracy);
+            state.hasLiveGps = true;
+
+            el.gpsDot.classList.add("live");
+            el.gpsStatusText.textContent = `GPS Activo (±${state.gpsAccuracy} m)`;
+            el.gpsCoordsText.textContent = `${state.userLat.toFixed(4)}°, ${state.userLon.toFixed(4)}°`;
+
+            populateRepeatersDropdown();
+          },
+          (err) => {
+            console.warn("Error GPS:", err);
+            el.gpsStatusText.textContent = "GPS no disponible (usando Utrera)";
+            showToast("No se obtuvo GPS; se mantiene ubicación de referencia.");
+          },
+          {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 5000
+          }
+        );
+      }
+
+      if (state.sensorsActive) {
+        el.btnActivateSensors.classList.add("active");
+        el.btnActivateSensors.innerHTML = "<span>✅ Brújula y GPS Activos</span>";
+        showToast("Sensores activados. Mantén el móvil plano y lejos del mástil.");
+      }
+    }
+
+    // Event Listeners
+    el.btnActivateSensors.addEventListener("click", activateSensors);
+
+    el.repeaterSelect.addEventListener("change", recalculateTarget);
+
+    el.tabAzimuth.addEventListener("click", () => {
+      state.manualModeType = "azimuth";
+      el.tabAzimuth.classList.add("active");
+      el.tabCoords.classList.remove("active");
+      el.manualAzimuthBox.style.display = "block";
+      el.manualCoordsBox.style.display = "none";
+      recalculateTarget();
+    });
+
+    el.tabCoords.addEventListener("click", () => {
+      state.manualModeType = "coords";
+      el.tabCoords.classList.add("active");
+      el.tabAzimuth.classList.remove("active");
+      el.manualAzimuthBox.style.display = "none";
+      el.manualCoordsBox.style.display = "grid";
+      recalculateTarget();
+    });
+
+    el.manualAzimuthInput.addEventListener("input", recalculateTarget);
+    el.manualLatInput.addEventListener("input", recalculateTarget);
+    el.manualLonInput.addEventListener("input", recalculateTarget);
+
+    // Control de aviso sonoro
+    el.btnAudio.addEventListener("click", () => {
+      state.audioEnabled = !state.audioEnabled;
+      if (state.audioEnabled) {
+        initAudioContext();
+        el.btnAudio.classList.add("active");
+        el.btnAudio.innerHTML = "<span>🔊 Aviso Sonoro: ON</span>";
+        playShortBeep(700, 0.08);
+      } else {
+        stopSteadyTone();
+        el.btnAudio.classList.remove("active");
+        el.btnAudio.innerHTML = "<span>🔇 Aviso Sonoro: OFF</span>";
+      }
+    });
+
+    // Control de modo simulación (útil para probar en ordenador o antes de subir al tejado)
+    el.btnSim.addEventListener("click", () => {
+      state.simMode = !state.simMode;
+      if (state.simMode) {
+        el.btnSim.classList.add("active");
+        el.btnSim.innerHTML = "<span>🎛️ Simular Giro: ON</span>";
+        el.simBox.style.display = "block";
+        state.simHeading = parseInt(el.simSlider.value, 10);
+      } else {
+        el.btnSim.classList.remove("active");
+        el.btnSim.innerHTML = "<span>🎛️ Simular Giro: OFF</span>";
+        el.simBox.style.display = "none";
+      }
+      updateCompassUI();
+    });
+
+    el.simSlider.addEventListener("input", () => {
+      state.simHeading = parseInt(el.simSlider.value, 10);
+      el.simDegLabel.textContent = `${state.simHeading}°`;
+      updateCompassUI();
+    });
+
+    // Control de calibración / offset
+    el.offsetSlider.addEventListener("input", () => {
+      state.calibrationOffset = parseInt(el.offsetSlider.value, 10);
+      el.offsetVal.textContent = `${state.calibrationOffset > 0 ? "+" : ""}${state.calibrationOffset}°`;
+      updateCompassUI();
+    });
+
+    el.btnResetOffset.addEventListener("click", () => {
+      state.calibrationOffset = 0;
+      el.offsetSlider.value = 0;
+      el.offsetVal.textContent = "0°";
+      updateCompassUI();
+      showToast("Calibración de brújula restablecida a 0°.");
+    });
+
+    // Inicialización al cargar la página
+    window.addEventListener("DOMContentLoaded", () => {
+      buildCompassTicks();
+      populateRepeatersDropdown();
+    });
+  </script>
+</body>
+</html>
